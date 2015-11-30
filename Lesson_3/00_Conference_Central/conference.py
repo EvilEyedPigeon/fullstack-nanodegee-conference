@@ -80,7 +80,7 @@ class ConferenceApi(remote.Service):
         profile = p_key.get()
         if not profile:
             profile = Profile(
-                key = None, # TODO 1 step 4. replace with the key from step 3
+                key = p_key, # TODO 1 step 4. replace with the key from step 3
                 displayName = user.nickname(),
                 mainEmail= user.email(),
                 teeShirtSize = str(TeeShirtSize.NOT_SPECIFIED),
