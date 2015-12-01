@@ -254,16 +254,22 @@ class ConferenceApi(remote.Service):
         #q = q.filter(Conference.topics == "Medical Innovations")
 
         # advanced filter building and usage
-        field = "topics"
-        operator = "="
-        value = "Medical Innovations"
-        f = ndb.query.FilterNode(field, operator, value)
-        q = q.filter(f)
+        # field = "topics"
+        # operator = "="
+        # value = "Medical Innovations"
+        # f = ndb.query.FilterNode(field, operator, value)
+        # q = q.filter(f)
 
         # TODO
         # add 2 filters:
         # 1: city equals to London
+        q = q.filter(Conference.city == "London")
+
         # 2: topic equals "Medical Innovations"
+        q = q.filter(Conference.topics == "Medical Innovations")
+
+        # 3: order by conference name
+        q = q.order(Conference.name)
 
         return ConferenceForms(
             items=[self._copyConferenceToForm(conf, "") for conf in q]
