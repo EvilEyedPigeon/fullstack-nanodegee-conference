@@ -271,8 +271,8 @@ class ConferenceApi(remote.Service):
         # 3: order by conference name
         q = q.order(Conference.name)
 
-        # 4: filter for June
-        q = q.filter(Conference.month == 6)
+        # 4: filter for big conferences
+        q = q.filter(Conference.maxAttendees > 10)
 
 
         return ConferenceForms(
