@@ -42,6 +42,11 @@ handlers:       # static then dynamic
   script: main.app
   login: admin
 
+
+builtins:
+- appstats: on
+
+
 libraries:
 
 - name: endpoints
