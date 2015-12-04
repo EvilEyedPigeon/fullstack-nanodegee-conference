@@ -101,6 +101,9 @@ class SessionForm(messages.Message):
     date            = messages.StringField(6)  # DateTimeField()
     startTime       = messages.StringField(7)  # DateTimeField()
 
+class SessionForms(messages.Message):
+    """SessionForms -- multiple Session outbound form message"""
+    items = messages.MessageField(SessionForm, 1, repeated=True)
 
 class TeeShirtSize(messages.Enum):
     """TeeShirtSize -- t-shirt size enumeration value"""
