@@ -36,6 +36,9 @@ from models import ConferenceForms
 from models import ConferenceQueryForm
 from models import ConferenceQueryForms
 from models import TeeShirtSize
+from models import Session
+from models import SessionForm
+
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -550,5 +553,65 @@ class ConferenceApi(remote.Service):
             items=[self._copyConferenceToForm(conf, "") for conf in q]
         )
 
+
+# - - - Sessions - - - - - - - - - - - - - - - - - - - -
+
+    def _createSessionObject(self, request):
+        """Create or update Session object, returning SessionForm/request."""
+        # Check to see if there is a user logged in. If so, get their id.
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+        user_id = getUserId(user)
+
+        # Check to see if the logged in user created the conference that this
+        # session is being added to.
+        conf = ndb.Key(urlsafe=request.confWebsafeKey).get()
+        if not conf:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s' % request.websafeConferenceKey)
+
+        if user_id != conf.organizerUserId:
+            raise endpoints.ForbiddenException(
+                'Only the conference owner can add a session to a conference.')
+
+        # Check required properties are present.
+        if not request.name:
+            raise endpoints.BadRequestException("Session 'name' field required")
+        if not request.typeOfSession:
+            raise endpoints.BadRequestException("Session 'typeOfSession' field required")
+
+        # Copy SessionForm/ProtoRPC Message into dict
+        data = {field.name: getattr(request, field.name) for field in request.all_fields()}
+
+        # Don't need to store the conference websafe key in the session object.
+        del data['confWebsafeKey']
+
+        # Convert date and start time from strings to Date and Time objects.
+        if data['date']:
+            data['date'] = datetime.strptime(data['date'][:10], "%Y-%m-%d").date()
+
+        if data['startTime']:
+            data['startTime'] = datetime.strptime(data['startTime'], "%H:%M").time()
+
+        print type(data['startTime'])
+
+        # Generate session id and key
+        c_key = conf.key
+        s_id = Session.allocate_ids(size=1, parent=c_key)[0]
+        s_key = ndb.Key(Session, s_id, parent=c_key)
+        data['key'] = s_key
+
+        # Create the session object and put it in the database
+        Session(**data).put()
+
+        return request
+
+
+    @endpoints.method(SessionForm, SessionForm, path='session',
+                      http_method='POST', name='createSession')
+    def createSession(self, request):
+        """Create new session."""
+        return self._createSessionObject(request)
 
 api = endpoints.api_server([ConferenceApi]) # register API
