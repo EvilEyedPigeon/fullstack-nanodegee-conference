@@ -108,9 +108,9 @@ class SessionForms(messages.Message):
 class Speaker(ndb.Model):
     """Speaker -- Speaker object"""
     name            = ndb.StringProperty(required=True)
-    organization    = ndb.StringProperty
-    email           = ndb.StringProperty
-    website         = ndb.StringProperty
+    organization    = ndb.StringProperty()
+    email           = ndb.StringProperty()
+    website         = ndb.StringProperty()
     sessionKeysToSpeak = ndb.StringProperty(repeated=True)
 
 class SpeakerForm(messages.Message):
