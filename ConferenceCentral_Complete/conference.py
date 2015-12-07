@@ -92,6 +92,12 @@ CONF_POST_REQUEST = endpoints.ResourceContainer(
 
 SESSION_GET_REQUEST = CONF_GET_REQUEST
 
+SESSION_BY_TYPE_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeConferenceKey=messages.StringField(1),
+    typeOfSession=messages.StringField(2),
+)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -652,6 +658,28 @@ class ConferenceApi(remote.Service):
 
         # Query for all sessions that have conf as an ancestor.
         q = Session.query(ancestor=conf.key)
+
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in q]
+        )
+
+
+    @endpoints.method(SESSION_BY_TYPE_GET_REQUEST, SessionForms,
+                      path='conference/{websafeConferenceKey}/sessions/{typeOfSession}',
+                      http_method='GET', name='getConferenceSessionsByType')
+    def getConferenceSessionsByType(self, request):
+        """Return sessions for a particular conference of a specified type."""
+        # Check if a conference exists given websafeConferenceKey
+        wsck = request.websafeConferenceKey
+        conf = ndb.Key(urlsafe=wsck).get()
+        if not conf:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s' % wsck)
+
+        # Query for all sessions that have conf as an ancestor and of
+        # type 'typeOfSession'
+        q = Session.query(ancestor=conf.key)
+        q = q.filter(Session.typeOfSession==request.typeOfSession)
 
         return SessionForms(
             items=[self._copySessionToForm(session) for session in q]
