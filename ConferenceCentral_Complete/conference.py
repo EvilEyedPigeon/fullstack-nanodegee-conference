@@ -660,6 +660,20 @@ class ConferenceApi(remote.Service):
 
 # - - - Speakers - - - - - - - - - - - - - - - - - - - -
 
+    def _copySpeakerToForm(self, speaker):
+        """Copy relevant fields from Speaker to SpeakerForm."""
+        spf = SpeakerForm()
+
+        for field in spf.all_fields():
+            if hasattr(speaker, field.name):
+                setattr(spf, field.name, getattr(speaker, field.name))
+            elif field.name == "websafeKey":
+                setattr(spf, field.name, speaker.key.urlsafe())
+
+        spf.check_initialized()
+        return spf
+
+
     def _createSpeakerObject(self, request):
         """Create Speaker object, returning SpeakerForm/request."""
         # Need to be logged in to create a speaker entity
@@ -693,6 +707,20 @@ class ConferenceApi(remote.Service):
     def createSpeaker(self, request):
         """Create new speaker."""
         return self._createSpeakerObject(request)
+
+
+    @endpoints.method(message_types.VoidMessage, SpeakerForms, path='speakers',
+                      http_method='GET', name='getSpeakers')
+    def getSpeakers(self, request):
+        """Return currently defined speakers.
+
+        Useful for the front end session form to show a choice of speakers.
+        """
+        speakers = Speaker.query()
+
+        return SpeakerForms(
+            items=[self._copySpeakerToForm(speaker) for speaker in speakers]
+        )
 
 
 api = endpoints.api_server([ConferenceApi]) # register API
