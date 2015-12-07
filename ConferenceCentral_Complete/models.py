@@ -111,7 +111,6 @@ class Speaker(ndb.Model):
     organization    = ndb.StringProperty()
     email           = ndb.StringProperty()
     website         = ndb.StringProperty()
-    sessionKeysToSpeak = ndb.StringProperty(repeated=True)
 
 class SpeakerForm(messages.Message):
     """Speaker -- Speaker form message"""
@@ -120,7 +119,6 @@ class SpeakerForm(messages.Message):
     email           = messages.StringField(3)
     website         = messages.StringField(4)
     websafeKey      = messages.StringField(5)
-    sessionKeysToSpeak = messages.StringField(6, repeated=True)
 
 class SpeakerForms(messages.Message):
     """SpeakerForms - multiple Speaker outbound form message"""
