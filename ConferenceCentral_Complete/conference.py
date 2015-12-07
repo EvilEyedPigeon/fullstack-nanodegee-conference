@@ -39,7 +39,9 @@ from models import TeeShirtSize
 from models import Session
 from models import SessionForm
 from models import SessionForms
-
+from models import Speaker
+from models import SpeakerForm
+from models import SpeakerForms
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -654,5 +656,43 @@ class ConferenceApi(remote.Service):
         return SessionForms(
             items=[self._copySessionToForm(session) for session in q]
         )
+
+
+# - - - Speakers - - - - - - - - - - - - - - - - - - - -
+
+    def _createSpeakerObject(self, request):
+        """Create Speaker object, returning SpeakerForm/request."""
+        # Need to be logged in to create a speaker entity
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+        user_id = getUserId(user)
+
+        # Speaker name is a required property
+        if not request.name:
+            raise endpoints.BadRequestException("Speaker 'name' field required")
+
+        # Copty SpeakerForm/ProtoRPC Message into dictionary
+        data = {field.name: getattr(request, field.name) for field in request.all_fields()}
+        del data['websafeKey']
+
+        # Make the logged in user the parent of the Speaker object.
+        p_key = ndb.Key(Profile, user_id)
+        s_id = Speaker.allocate_ids(size=1, parent=p_key)[0]
+        s_key = ndb.Key(Speaker, s_id, parent=p_key)
+        data['key'] = s_key
+
+        # Create the Speaker entity in the datastore
+        Speaker(**data).put()
+
+        return request
+
+
+    @endpoints.method(SpeakerForm, SpeakerForm, path='speaker',
+                      http_method='POST', name='createSpeaker')
+    def createSpeaker(self, request):
+        """Create new speaker."""
+        return self._createSpeakerObject(request)
+
 
 api = endpoints.api_server([ConferenceApi]) # register API
