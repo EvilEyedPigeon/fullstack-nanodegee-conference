@@ -23,6 +23,36 @@ App Engine application for the Udacity training course.
 1. (Optional) Generate your client library(ies) with [the endpoints tool][6].
 1. Deploy your application.
 
+## Session and Speaker class design
+A conference can have one or more sessions. A session entity is a child of
+a conference as it is an unique event in the database. Only the conference
+organizer can create a session of a conference. The session name and type are
+required attributes of the Session class, while other attributes defined in the
+[project specification][7] are optional. The `speaker` attribute in the spec has
+been replaced by `speakerWebSafeKeys` to hold the websafe keys of one or more
+speaker entities (see below).
+
+The SessionForm class defines the Google Protocol Remote Procedure Call (RPC)
+message to and from the front end. It has the extra field `confWebSafeKey` in order
+for the session to be attached to the specified Conference object.
+
+Each speaker has been implemented as its own entity. This allows the storing of
+extra information such as speaker organization, email, website, which wouldn't make sense
+to be stored in the Session class. A speaker could speak at more that one session,
+so it would not make sense to make Speaker and child of Session in the Datastore.
+Instead Speaker is a child of Profile, so only logged in users can create a speaker
+(for data accountability) and affords that only the speaker creator could edit a
+speaker.
+
+To support speaker as its own entity, `createSpeaker` and `getSpeakers` endpoint
+methods have been implemented. `getSpeakers` would be useful for the front end
+session creation form to call to provide options for the speaker field. If the
+correct speaker is not in the list, the user could then be given the opportunity
+to create a speaker.
+
+The SpeakerForm RPC message class as the extra field `websafeKey` so that the
+front end may reference a speaker entity when creating a session.
+
 
 [1]: https://developers.google.com/appengine
 [2]: http://python.org
@@ -30,3 +60,4 @@ App Engine application for the Udacity training course.
 [4]: https://console.developers.google.com/
 [5]: https://localhost:8080/
 [6]: https://developers.google.com/appengine/docs/python/endpoints/endpoints_tool
+[7]: https://docs.google.com/document/d/1H9anIDV4QCPttiQEwpGe6MnMBx92XCOlz0B4ciD7lOs/pub
