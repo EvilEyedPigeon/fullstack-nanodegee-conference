@@ -98,6 +98,11 @@ SESSION_BY_TYPE_GET_REQUEST = endpoints.ResourceContainer(
     typeOfSession=messages.StringField(2),
 )
 
+SESSION_BY_SPEAKER_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeSpeakerKey=messages.StringField(1),
+)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -593,6 +598,14 @@ class ConferenceApi(remote.Service):
             raise endpoints.UnauthorizedException('Authorization required')
         user_id = getUserId(user)
 
+        # Check required properties are present.
+        if not request.name:
+            raise endpoints.BadRequestException("Session 'name' field required")
+        if not request.typeOfSession:
+            raise endpoints.BadRequestException("Session 'typeOfSession' field required")
+        if not request.confWebsafeKey:
+            raise endpoints.BadRequestException("Session 'confWebsafeKey' field required")
+
         # Check to see if the logged in user created the conference that this
         # session is being added to.
         conf = ndb.Key(urlsafe=request.confWebsafeKey).get()
@@ -603,12 +616,6 @@ class ConferenceApi(remote.Service):
         if user_id != conf.organizerUserId:
             raise endpoints.ForbiddenException(
                 'Only the conference owner can add a session to a conference.')
-
-        # Check required properties are present.
-        if not request.name:
-            raise endpoints.BadRequestException("Session 'name' field required")
-        if not request.typeOfSession:
-            raise endpoints.BadRequestException("Session 'typeOfSession' field required")
 
         # Copy SessionForm/ProtoRPC Message into dict
         data = {field.name: getattr(request, field.name) for field in request.all_fields()}
@@ -680,6 +687,27 @@ class ConferenceApi(remote.Service):
         # type 'typeOfSession'
         q = Session.query(ancestor=conf.key)
         q = q.filter(Session.typeOfSession==request.typeOfSession)
+
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in q]
+        )
+
+
+    @endpoints.method(SESSION_BY_SPEAKER_GET_REQUEST, SessionForms,
+                      path='speaker/{websafeSpeakerKey}/sessions',
+                      http_method='GET', name='getSessionsBySpeaker')
+    def getSessionsBySpeaker(self, request):
+        """Returns all sessions across all conferences by speaker."""
+        # Check if a speaker exists given the websafeSpeakerKey
+        wssk = request.websafeSpeakerKey
+        speaker = ndb.Key(urlsafe=wssk).get()
+        if not speaker:
+            raise endpoints.NotFoundException(
+                'No speaker found with key: %s' % wssk)
+
+        # Filter sessions by speaker
+        q = Session.query()
+        q = q.filter(Session.speakerWebSafeKeys==wssk)
 
         return SessionForms(
             items=[self._copySessionToForm(session) for session in q]
