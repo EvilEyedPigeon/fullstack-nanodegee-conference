@@ -124,12 +124,12 @@ class ConferenceApi(remote.Service):
             entity = ndb.Key(urlsafe=websafe_key).get()
         except (TypeError, ProtocolBuffer.ProtocolBufferDecodeError):
             raise endpoints.BadRequestException(
-                'Bad or corrupt %s key: %s' % (entity_kind, websafe_key)
+                'Bad or corrupt %s websafe key: %s' % (entity_kind, websafe_key)
             )
 
         if not entity:
             raise endpoints.NotFoundException(
-                'No %s found with key: %s' % (entity_kind, websafe_key)
+                'No %s found with websafe key: %s' % (entity_kind, websafe_key)
             )
 
         return entity
@@ -217,12 +217,8 @@ class ConferenceApi(remote.Service):
         # copy ConferenceForm/ProtoRPC Message into dict
         data = {field.name: getattr(request, field.name) for field in request.all_fields()}
 
-        # update existing conference
-        conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
-        # check that conference exists
-        if not conf:
-            raise endpoints.NotFoundException(
-                'No conference found with key: %s' % request.websafeConferenceKey)
+        # update existing conference, checking it exists first
+        conf = self._checkEntityExists(request.websafeConferenceKey, 'conference')
 
         # check that user is owner
         if user_id != conf.organizerUserId:
@@ -268,10 +264,9 @@ class ConferenceApi(remote.Service):
     def getConference(self, request):
         """Return requested conference (by websafeConferenceKey)."""
         # get Conference object from request; bail if not found
-        conf = ndb.Key(urlsafe=request.websafeConferenceKey).get()
-        if not conf:
-            raise endpoints.NotFoundException(
-                'No conference found with key: %s' % request.websafeConferenceKey)
+        conf = self._checkEntityExists(request.websafeConferenceKey, 'conference')
+
+        # Get profile of creator in order to return their name
         prof = conf.key.parent().get()
         # return ConferenceForm
         return self._copyConferenceToForm(conf, getattr(prof, 'displayName'))
@@ -492,11 +487,7 @@ class ConferenceApi(remote.Service):
 
         # check if conf exists given websafeConfKey
         # get conference; check that it exists
-        wsck = request.websafeConferenceKey
-        conf = ndb.Key(urlsafe=wsck).get()
-        if not conf:
-            raise endpoints.NotFoundException(
-                'No conference found with key: %s' % wsck)
+        conf = self._checkEntityExists(request.websafeConferenceKey, 'conference')
 
         # register
         if reg:
@@ -631,10 +622,7 @@ class ConferenceApi(remote.Service):
 
         # Check to see if the logged in user created the conference that this
         # session is being added to.
-        conf = ndb.Key(urlsafe=request.confWebsafeKey).get()
-        if not conf:
-            raise endpoints.NotFoundException(
-                'No conference found with key: %s' % request.websafeConferenceKey)
+        conf = self._checkEntityExists(request.confWebsafeKey, 'conference')
 
         if user_id != conf.organizerUserId:
             raise endpoints.ForbiddenException(
@@ -680,11 +668,7 @@ class ConferenceApi(remote.Service):
     def getConferenceSessions(self, request):
         """Return all the sessions for a particular conference."""
         # Check if a conference exists given websafeConferenceKey
-        wsck = request.websafeConferenceKey
-        conf = ndb.Key(urlsafe=wsck).get()
-        if not conf:
-            raise endpoints.NotFoundException(
-                'No conference found with key: %s' % wsck)
+        conf = self._checkEntityExists(request.websafeConferenceKey, 'conference')
 
         # Query for all sessions that have conf as an ancestor.
         q = Session.query(ancestor=conf.key)
@@ -700,11 +684,7 @@ class ConferenceApi(remote.Service):
     def getConferenceSessionsByType(self, request):
         """Return sessions for a particular conference of a specified type."""
         # Check if a conference exists given websafeConferenceKey
-        wsck = request.websafeConferenceKey
-        conf = ndb.Key(urlsafe=wsck).get()
-        if not conf:
-            raise endpoints.NotFoundException(
-                'No conference found with key: %s' % wsck)
+        conf = self._checkEntityExists(request.websafeConferenceKey, 'conference')
 
         # Query for all sessions that have conf as an ancestor and of
         # type 'typeOfSession'
@@ -722,15 +702,12 @@ class ConferenceApi(remote.Service):
     def getSessionsBySpeaker(self, request):
         """Returns all sessions across all conferences by speaker."""
         # Check if a speaker exists given the websafeSpeakerKey
-        wssk = request.websafeSpeakerKey
-        speaker = ndb.Key(urlsafe=wssk).get()
-        if not speaker:
-            raise endpoints.NotFoundException(
-                'No speaker found with key: %s' % wssk)
+        wsspk = request.websafeSpeakerKey
+        self._checkEntityExists(wsspk, 'speaker')
 
         # Filter sessions by speaker
         q = Session.query()
-        q = q.filter(Session.speakerWebSafeKeys==wssk)
+        q = q.filter(Session.speakerWebSafeKeys==wsspk)
 
         return SessionForms(
             items=[self._copySessionToForm(session) for session in q]
