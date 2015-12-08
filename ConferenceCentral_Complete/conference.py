@@ -23,6 +23,7 @@ from protorpc import remote
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
+from google.net.proto import ProtocolBuffer
 
 from models import ConflictException
 from models import Profile
@@ -103,6 +104,10 @@ SESSION_BY_SPEAKER_GET_REQUEST = endpoints.ResourceContainer(
     websafeSpeakerKey=messages.StringField(1),
 )
 
+UPDATE_WISHLIST_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeSessionKey=messages.StringField(1),
+)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -111,6 +116,24 @@ SESSION_BY_SPEAKER_GET_REQUEST = endpoints.ResourceContainer(
     scopes=[EMAIL_SCOPE])
 class ConferenceApi(remote.Service):
     """Conference API v0.1"""
+
+
+    def _checkEntityExists(self, websafe_key, entity_kind):
+        """Checks that an entity exists and returns it if it does."""
+        try:
+            entity = ndb.Key(urlsafe=websafe_key).get()
+        except (TypeError, ProtocolBuffer.ProtocolBufferDecodeError):
+            raise endpoints.BadRequestException(
+                'Bad or corrupt %s key: %s' % (entity_kind, websafe_key)
+            )
+
+        if not entity:
+            raise endpoints.NotFoundException(
+                'No %s found with key: %s' % (entity_kind, websafe_key)
+            )
+
+        return entity
+
 
 # - - - Conference objects - - - - - - - - - - - - - - - - -
 
@@ -777,6 +800,52 @@ class ConferenceApi(remote.Service):
         return SpeakerForms(
             items=[self._copySpeakerToForm(speaker) for speaker in speakers]
         )
+
+
+# - - - Wishlist - - - - - - - - - - - - - - - - - - - -
+
+    @ndb.transactional()
+    def _updateWishlist(self, request, add=True):
+        """Add or remove a session from a user's wishlist."""
+        retval = None
+        prof = self._getProfileFromUser() # get user Profile
+
+        # Check if the session specified in the request exists.
+        wssk = request.websafeSessionKey
+        self._checkEntityExists(wssk, 'session')
+
+        if add:
+            # Check if user already has this session in their wishlist
+            if wssk in prof.sessionKeysInWishlist:
+                raise ConflictException(
+                    "You already have this session in your wishlist"
+                )
+
+            # Update the user's wishlist
+            prof.sessionKeysInWishlist.append(wssk)
+            retval = True
+
+        # Remove session from wishlist
+        else:
+            # Check if session is in wishlist
+            if wssk in prof.sessionKeysInWishlist:
+                prof.sessionKeysInWishlist.remove(wssk)
+                retval = True
+            else:
+                retval = False
+
+        # Write the updated profile to the datastore
+        prof.put()
+        return BooleanMessage(data=retval)
+
+
+    @endpoints.method(UPDATE_WISHLIST_REQUEST, BooleanMessage,
+                       path='session/{websafeSessionKey}/addToWishlist',
+                       http_method='POST',
+                       name='addSessionToWishlist')
+    def addSessionToWishlist(self, request):
+        """Add session to logged in user's wishlist."""
+        return self._updateWishlist(request)
 
 
 api = endpoints.api_server([ConferenceApi]) # register API
