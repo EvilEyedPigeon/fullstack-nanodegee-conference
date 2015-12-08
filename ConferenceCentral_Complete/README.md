@@ -53,6 +53,19 @@ to create a speaker.
 The SpeakerForm RPC message class as the extra field `websafeKey` so that the
 front end may reference a speaker entity when creating a session.
 
+## Additional Queries
+### Get session by duration
+Let's say you don't like sessions that are too long. You might want to list all
+the sessions that are less than an hour. Or you want to go in-depth on a topic
+and want a list of sessions over an hour. The `getSessionByDuration` query does
+this by accepting two parameters, `minDuration` and `maxDuration`. Users may specify
+either of these parameters or both to form a query. Durations are
+measured in minutes.
+
+### Get speaker by organization
+If you are interesting in speakers from your favaourite company or organization, you
+can use the `getSpeakerByOranisation` query to list them.
+
 
 [1]: https://developers.google.com/appengine
 [2]: http://python.org
