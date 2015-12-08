@@ -155,3 +155,7 @@ class ConferenceQueryForms(messages.Message):
     """ConferenceQueryForms -- multiple ConferenceQueryForm inbound form message"""
     filters = messages.MessageField(ConferenceQueryForm, 1, repeated=True)
 
+class SessionQueryDurationForm(messages.Message):
+    """SessionQueryDuration - Session duration query inbound message"""
+    minDuration = messages.IntegerField(1)
+    maxDuration = messages.IntegerField(2)
