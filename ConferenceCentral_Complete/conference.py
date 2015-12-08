@@ -40,6 +40,7 @@ from models import TeeShirtSize
 from models import Session
 from models import SessionForm
 from models import SessionForms
+from models import SessionQueryDurationForm
 from models import Speaker
 from models import SpeakerForm
 from models import SpeakerForms
@@ -108,6 +109,7 @@ UPDATE_WISHLIST_REQUEST = endpoints.ResourceContainer(
     message_types.VoidMessage,
     websafeSessionKey=messages.StringField(1),
 )
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -714,6 +716,32 @@ class ConferenceApi(remote.Service):
 
         return SessionForms(
             items=[self._copySessionToForm(session) for session in q]
+        )
+
+
+    @endpoints.method(
+        SessionQueryDurationForm, SessionForms, path='getSessionsByDuration',
+        http_method='GET', name='getSessionsByDuration'
+    )
+    def getSessionsByDuration(self, request):
+        """Get sessions of a duration between the specified min and max.
+
+        Can also just specify a min or max duration.
+        """
+        # If no minDuration specified, assume a value of zero
+        if not request.minDuration:
+            request.minDuration = 0
+
+        # Session needs to be sorted first on the duration property
+        qry = Session.query().order(Session.duration)
+        qry = qry.filter(Session.duration >= request.minDuration)
+
+        # Only apply the max duration filter if the maxDuration parameter is present
+        if request.maxDuration:
+            qry = qry.filter(Session.duration <= request.maxDuration)
+
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in qry]
         )
 
 
