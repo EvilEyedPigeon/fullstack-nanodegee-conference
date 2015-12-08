@@ -599,6 +599,8 @@ class ConferenceApi(remote.Service):
                     setattr(sf, field.name, getattr(session, field.name))
             elif field.name == "confWebsafeKey":
                 setattr(sf, field.name, session.key.parent().urlsafe())
+            elif field.name == "websafeKey":
+                setattr(sf, field.name, session.key.urlsafe())
 
         sf.check_initialized()
         return sf
@@ -633,6 +635,7 @@ class ConferenceApi(remote.Service):
 
         # Don't need to store the conference websafe key in the session object.
         del data['confWebsafeKey']
+        del data['websafeKey']
 
         # Convert date and start time from strings to Date and Time objects.
         if data['date']:
