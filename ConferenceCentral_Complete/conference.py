@@ -44,6 +44,7 @@ from models import SessionQueryDurationForm
 from models import Speaker
 from models import SpeakerForm
 from models import SpeakerForms
+from models import SpeakerQueryOrganizationForm
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -807,6 +808,18 @@ class ConferenceApi(remote.Service):
 
         return SpeakerForms(
             items=[self._copySpeakerToForm(speaker) for speaker in speakers]
+        )
+
+
+    @endpoints.method(SpeakerQueryOrganizationForm, SpeakerForms,
+                      path='getSpeakersByOrganization', http_method='GET',
+                      name='getSpeakersByOrganization')
+    def getSpeakersByOrganization(self, request):
+        """Return all the speakers belonging to a specified organization."""
+        qry = Speaker.query(Speaker.organization==request.organization)
+
+        return SpeakerForms(
+            items=[self._copySpeakerToForm(speaker) for speaker in qry]
         )
 
 
