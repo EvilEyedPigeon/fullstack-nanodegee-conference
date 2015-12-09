@@ -58,6 +58,9 @@ API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
 ANNOUNCEMENT_TPL = ('Last chance to attend! The following conferences '
                     'are nearly sold out: %s')
+MEMCACHE_FEATURED_SPEAKER_KEY = "FEATURED_SPEAKER"
+FEATURED_SPEAKER_TPL = ('The Featured Speaker is %s, who is giving the '
+                        'following sessions: %s.')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 DEFAULTS = {
@@ -658,6 +661,26 @@ class ConferenceApi(remote.Service):
         # Create the session object and put it in the database
         Session(**data).put()
 
+        # Check if the princple speaker of this session is speaking at more
+        # than one session at this conference
+        wspsk = data['speakerWebSafeKeys'][0]
+        q = Session.query(ancestor=conf.key)
+        q = q.filter(Session.speakerWebSafeKeys==wspsk)
+
+        if q.count() > 1:
+            # Get name of speaker and sessions
+            speaker_key = ndb.Key(urlsafe=wspsk)
+            speaker = speaker_key.get()
+
+            sessions = q.fetch(projection=[Session.name])
+            session_names = ', '.join(session.name for session in sessions)
+
+            # Queue a task to put it in the memcache
+            taskqueue.add(params={'speakerName': speaker.name,
+                'sessionNames': session_names},
+                url='/tasks/set_featured_speaker'
+            )
+
         return request
 
 
@@ -926,6 +949,17 @@ class ConferenceApi(remote.Service):
             items=[self._copySessionToForm(session) for session in sessions]
         )
 
+
+# - - - Featured Speaker - - - - - - - - - - - - - - - - - - - -
+
+    @staticmethod
+    def _cacheFeaturedSpeaker(request):
+        """Create Featured Speaker and assign to memcache."""
+        featured_speaker = FEATURED_SPEAKER_TPL % (request.get('speakerName'),
+                                                   request.get('sessionNames'))
+        memcache.set(MEMCACHE_FEATURED_SPEAKER_KEY, featured_speaker)
+
+        return featured_speaker
 
 
 api = endpoints.api_server([ConferenceApi]) # register API
