@@ -19,11 +19,13 @@ App Engine application for the Udacity training course.
 1. Update the value of CLIENT_ID in `static/js/app.js` to the Web client ID
 1. (Optional) Mark the configuration files as unchanged as follows:
    `$ git update-index --assume-unchanged app.yaml settings.py static/js/app.js`
-1. Run the app with the devserver using `dev_appserver.py DIR`, and ensure it's running by visiting your local server's address (by default [localhost:8080][5].)
+1. Run the app with the devserver using `dev_appserver.py DIR`, and ensure it's
+   running by visiting your local server's address (by default [localhost:8080][5].)
 1. (Optional) Generate your client library(ies) with [the endpoints tool][6].
 1. Deploy your application.
 
 ## Session and Speaker class design
+### Sessions
 A conference can have one or more sessions. A session entity is a child of
 a conference as it is an unique event in the database. Only the conference
 organizer can create a session of a conference. The session name and type are
@@ -34,8 +36,10 @@ speaker entities (see below).
 
 The SessionForm class defines the Google Protocol Remote Procedure Call (RPC)
 message to and from the front end. It has the extra field `confWebSafeKey` in order
-for the session to be attached to the specified Conference object.
+for the session to be attached to the specified Conference object. This is a required
+field when creating a session.
 
+### Speaker entity
 Each speaker has been implemented as its own entity. This allows the storing of
 extra information such as speaker organization, email, website, which wouldn't make sense
 to be stored in the Session class. A speaker could speak at more that one session,
