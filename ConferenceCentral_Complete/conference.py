@@ -962,4 +962,13 @@ class ConferenceApi(remote.Service):
         return featured_speaker
 
 
+    @endpoints.method(message_types.VoidMessage, StringMessage,
+                      path='getFeaturedSpeaker', http_method='GET',
+                      name='getFeaturedSpeaker')
+    def getFeaturedSpeaker(self, request):
+        """Return Featured Speaker from memcache."""
+        return StringMessage(
+            data=memcache.get(MEMCACHE_FEATURED_SPEAKER_KEY) or "")
+
+
 api = endpoints.api_server([ConferenceApi]) # register API
