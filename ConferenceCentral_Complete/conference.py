@@ -746,6 +746,37 @@ class ConferenceApi(remote.Service):
         )
 
 
+    @endpoints.method(message_types.VoidMessage, SessionForms,
+                      path='getNonWorkshopSessionsBefore7',
+                      http_method='GET', name='getNonWorkshopSessionsBefore7')
+    def getNonWorkshopSessionsBefore7(self, request):
+        """Get sessions that are not of type 'Workshop' and are before 7 pm."""
+        # Do a query for non-workshops and get a list of keys.
+        qry_nonworkshops = Session.query(Session.typeOfSession!='Workshop')
+        qry_nonworkshops_keys = []
+        for key in qry_nonworkshops.iter(keys_only=True):
+            qry_nonworkshops_keys.append(key)
+
+        # Do a query for sessions before 7 pm
+        qry_before_7 = Session.query(
+            Session.startTime < datetime.strptime("19:00", "%H:%M").time()
+        )
+        qry_before_7_keys = []
+        for key in qry_before_7.iter(keys_only=True):
+            qry_before_7_keys.append(key)
+
+        # Find the keys that are common between the two sets of keys
+        keys_nonworkshop_before_7 = list(set(qry_nonworkshops_keys) &
+                                         set(qry_before_7_keys))
+
+        # Get the session entities that are not workshops and before 7 pm
+        sessions = ndb.get_multi(keys_nonworkshop_before_7)
+
+        return SessionForms(
+            items=[self._copySessionToForm(session) for session in sessions]
+        )
+
+
 # - - - Speakers - - - - - - - - - - - - - - - - - - - -
 
     def _copySpeakerToForm(self, speaker):
