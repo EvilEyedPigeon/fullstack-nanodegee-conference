@@ -27,7 +27,7 @@ App Engine application for the Udacity training course.
 ## Session and Speaker class design
 ### Sessions
 A conference can have one or more sessions. A session entity is a child of
-a conference as it is an unique event in the database. Only the conference
+a conference as it is an unique event in the world. Only the conference
 organizer can create a session of a conference. The session name and type are
 required attributes of the Session class, while other attributes defined in the
 [project specification][7] are optional. The `speaker` attribute in the spec has
@@ -43,7 +43,7 @@ field when creating a session.
 Each speaker has been implemented as its own entity. This allows the storing of
 extra information such as speaker organization, email, website, which wouldn't make sense
 to be stored in the Session class. A speaker could speak at more that one session,
-so it would not make sense to make Speaker and child of Session in the Datastore.
+so it would not make sense to make Speaker a child of Session in the Datastore.
 Instead Speaker is a child of Profile, so only logged in users can create a speaker
 (for data accountability) and affords that only the speaker creator could edit a
 speaker.
@@ -67,7 +67,7 @@ either of these parameters or both to form a query. Durations are
 measured in minutes.
 
 ### Get speaker by organization
-If you are interesting in speakers from your favaourite company or organization, you
+If you are interesting in speakers from your favourite company or organization, you
 can use the `getSpeakerByOranisation` query to list them.
 
 ## Query related problem
@@ -75,13 +75,13 @@ can use the `getSpeakerByOranisation` query to list them.
 Udacity asked about the following query. What if you don't like sessions that are workshops
 and don't like sessions after 7 pm. The problem here is that there are two inequality filters
 on two different properties. One of the restricts of Datastore is that an inequality filter
-can only be applied to at most one propertry in a query to the Datastore.
+can only be applied to at most one property in a query to the Datastore.
 
 ### A solution
 One solution would be to split the problem into two queries, one for the session type
 and one for the start time. This will produce two lists of keys, which can be turned
 into [Phython sets][8] as keys are unique. We can then get the intersection of these
-to sets with `intersection` method or the equlaivant `&` operator. The result will
+to sets with `intersection` method or the equivalent `&` operator. The result will
 be sessions that are not workshops and before 7 pm. This solution has been implemented
 in the method `conference.getNonWorkshopSessionsBefore7`.
 
