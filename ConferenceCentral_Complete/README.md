@@ -66,6 +66,20 @@ measured in minutes.
 If you are interesting in speakers from your favaourite company or organization, you
 can use the `getSpeakerByOranisation` query to list them.
 
+## Query related problem
+### The Problem
+Udacity asked about the following query. What if you don't like sessions that are workshops
+and don't like sessions after 7 pm. The problem here is that there are two inequality filters
+on two different properties. One of the restricts of Datastore is that an inequality filter
+can only be applied to at most one propertry in a query to the Datastore.
+
+### A solution
+One solution would be to split the problem into two queries, one for the session type
+and one for the start time. This will produce two lists of keys, which can be turned
+into [Phython sets][8] as keys are unique. We can then get the intersection of these
+to sets with `intersection` method or the equlaivant `&` operator. The result will
+be sessions that are not workshops and before 7 pm. This solution has been implemented
+in the method `conference.getNonWorkshopSessionsBefore7`.
 
 [1]: https://developers.google.com/appengine
 [2]: http://python.org
@@ -74,3 +88,4 @@ can use the `getSpeakerByOranisation` query to list them.
 [5]: https://localhost:8080/
 [6]: https://developers.google.com/appengine/docs/python/endpoints/endpoints_tool
 [7]: https://docs.google.com/document/d/1H9anIDV4QCPttiQEwpGe6MnMBx92XCOlz0B4ciD7lOs/pub
+[8]: https://docs.python.org/2/library/sets.html
