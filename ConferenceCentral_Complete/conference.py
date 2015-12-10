@@ -128,10 +128,21 @@ class ConferenceApi(remote.Service):
         """Checks that an entity exists and returns it if it does."""
         try:
             entity = ndb.Key(urlsafe=websafe_key).get()
-        except (TypeError, ProtocolBuffer.ProtocolBufferDecodeError):
+        except TypeError:
             raise endpoints.BadRequestException(
-                'Bad or corrupt %s websafe key: %s' % (entity_kind, websafe_key)
+                'Non-string not allowed as %s websafe key: %s' % (entity_kind, websafe_key)
             )
+        except Exception, e:
+            # When deployed, we have to inspect the name of the exeption as trying to catch
+            # ProtocolBuffer.ProtocolBufferDecodeError imported from google.net.proto would
+            # only work when run on the develop server. This work around code was found here:
+            # https://github.com/googlecloudplatform/datastore-ndb-python/issues/143
+            if e.__class__.__name__ == 'ProtocolBufferDecodeError':
+                raise endpoints.BadRequestException(
+                'Bad or corrupt %s websafe key: %s' % (entity_kind, websafe_key)
+                )
+            else:
+                raise
 
         if not entity:
             raise endpoints.NotFoundException(
