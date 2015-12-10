@@ -650,8 +650,6 @@ class ConferenceApi(remote.Service):
         if data['startTime']:
             data['startTime'] = datetime.strptime(data['startTime'], "%H:%M").time()
 
-        print type(data['startTime'])
-
         # Generate session id and key
         c_key = conf.key
         s_id = Session.allocate_ids(size=1, parent=c_key)[0]
