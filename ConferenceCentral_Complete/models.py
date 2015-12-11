@@ -161,5 +161,5 @@ class SessionQueryDurationForm(messages.Message):
     maxDuration = messages.IntegerField(2)
 
 class SpeakerQueryOrganizationForm(messages.Message):
-    """SpeakerQueryOrganizationForm -- Speaker organization query inbound messsage"""
+    """SpeakerQueryOrganizationForm -- Speaker organization query inbound message"""
     organization = messages.StringField(1)

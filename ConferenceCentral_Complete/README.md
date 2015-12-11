@@ -60,7 +60,7 @@ front end may reference a speaker entity when creating a session.
 ## Instructions for new endpoint methods using Google APIs Explorer
 The front end has not been updated to handle the added sessions, speakers or
 wishlists, etc. These new features can be accessed from the Google APIs Explorer.
-Here are some helpfult tips on using this interface.
+Here are some helpful tips on using this interface.
 
 ### createSession and createSpeaker
 In the `Request body`, the following properties need to be defined: The `name` of the
@@ -80,7 +80,7 @@ All other properties in the `createSession` method are optional.
 
 ### Wishlist
 To add a session to your wish list, get the websafe key for the session (you can get a list
-of all the sessions of a particaular conference using the `getConferenceSessions` method) and
+of all the sessions of a particular conference using the `getConferenceSessions` method) and
 paste it in to the `wedsafeSessionKey` field. If success, the response will be `True`. You can
 then check the contents of your wishlist with the `getSessionsInWishlist` method.
 

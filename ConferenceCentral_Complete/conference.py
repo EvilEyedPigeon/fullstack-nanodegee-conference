@@ -133,7 +133,7 @@ class ConferenceApi(remote.Service):
                 (entity_kind, websafe_key)
             )
         except Exception, e:
-            # When deployed, we have to inspect the name of the exeption as
+            # When deployed, we have to inspect the name of the exception as
             # trying to catch ProtocolBuffer.ProtocolBufferDecodeError imported
             # from google.net.proto would only work when run on the develop
             # server. This work around code was found here:
@@ -681,7 +681,7 @@ class ConferenceApi(remote.Service):
         # Create the session object and put it in the database
         Session(**data).put()
 
-        # Check if the princple speaker of this session is speaking at more
+        # Check if the principle speaker of this session is speaking at more
         # than one session at this conference
         wspsk = data['speakerWebSafeKeys'][0]
         qry = Session.query(ancestor=conf.key)
