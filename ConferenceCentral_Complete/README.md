@@ -57,6 +57,35 @@ to create a speaker.
 The SpeakerForm RPC message class as the extra field `websafeKey` so that the
 front end may reference a speaker entity when creating a session.
 
+## Instructions for new endpoint methods using Google APIs Explorer
+The front end has not been updated to handle the added sessions, speakers or
+wishlists, etc. These new features can be accessed from the Google APIs Explorer.
+Here are some helpfult tips on using this interface.
+
+### createSession and createSpeaker
+In the `Request body`, the following properties need to be defined: The `name` of the
+session and the `confWebsafeKey` indicating which conference the session belongs to.
+You can find the conference websafe key by going to the `Show Conferences` page on the
+front end web page and clicking on the `Details` link for a conference. In the URL, the
+`confWebsafeKey` is the long string after `/conference/detail/`.
+
+If you want to specify one or more speakers for a session, you first need to create a
+speaker with the `createSpeaker` method. The only required property is `name`. Once you
+have created a speaker, use the method `getSpeakers` to display the `websafeKey` of the
+speaker you want to add to the session, highlight and copy it. Then back in `createSession`,
+paste in the key into the `speakerWebsafeKey` repeated property.
+
+All other properties in the `createSession` method are optional.
+
+### Wishlist
+To add a session to your wish list, get the websafe key for the session (you can get a list
+of all the sessions of a particaular conference using the `getConferenceSessions` method) and
+paste it in to the `wedsafeSessionKey` field. If success, the response will be `True`. You can
+then check the contents of your wishlist with the `getSessionsInWishlist` method.
+
+To delete a session from your wishlist, use the `deleteSessionInWishlist` method, giving it the
+websafe key of the session you wish to remove.
+
 ## Additional Queries
 ### Get session by duration
 Let's say you don't like sessions that are too long. You might want to list all
