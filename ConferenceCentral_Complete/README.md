@@ -64,7 +64,8 @@ Here are some helpfult tips on using this interface.
 
 ### createSession and createSpeaker
 In the `Request body`, the following properties need to be defined: The `name` of the
-session and the `confWebsafeKey` indicating which conference the session belongs to.
+session, the `confWebsafeKey` indicating which conference the session belongs to and
+the `typeOfSession`, so sessions can be queried by session type.
 You can find the conference websafe key by going to the `Show Conferences` page on the
 front end web page and clicking on the `Details` link for a conference. In the URL, the
 `confWebsafeKey` is the long string after `/conference/detail/`.
