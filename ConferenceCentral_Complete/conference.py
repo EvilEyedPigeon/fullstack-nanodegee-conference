@@ -679,7 +679,8 @@ class ConferenceApi(remote.Service):
         data['key'] = s_key
 
         # Create the session object and put it in the database
-        Session(**data).put()
+        new_session = Session(**data)
+        new_session.put()
 
         # Check if the principle speaker of this session is speaking at more
         # than one session at this conference
@@ -701,7 +702,7 @@ class ConferenceApi(remote.Service):
                                     'sessionNames': session_names},
                             url='/tasks/set_featured_speaker')
 
-        return request
+        return self._copySessionToForm(new_session)
 
 
     @endpoints.method(SessionForm, SessionForm, path='session',
