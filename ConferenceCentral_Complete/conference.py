@@ -754,14 +754,13 @@ class ConferenceApi(remote.Service):
         """Returns all sessions across all conferences by speaker."""
         # Check if a speaker exists given the websafeSpeakerKey
         wsspk = request.websafeSpeakerKey
-        self._checkEntityExists(wsspk, 'speaker')
+        speaker = self._checkEntityExists(wsspk, 'speaker')
 
-        # Filter sessions by speaker
-        qry = Session.query()
-        qry = qry.filter(Session.speakerWebSafeKeys == wsspk)
+        # Get the sessions this speaker is speaking at
+        sessions = ndb.get_multi(speaker.sessionKeys)
 
         return SessionForms(
-            items=[self._copySessionToForm(session) for session in qry]
+            items=[self._copySessionToForm(session) for session in sessions]
         )
 
 
