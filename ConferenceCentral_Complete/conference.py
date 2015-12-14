@@ -683,6 +683,17 @@ class ConferenceApi(remote.Service):
         new_session.put()
 
         if data['speakerWebSafeKeys']:
+            # Update the session keys in each speaker object
+            speaker_keys = [ndb.Key(urlsafe=spwsk)
+                            for spwsk in data['speakerWebSafeKeys']]
+
+            speakers = ndb.get_multi(speaker_keys)
+
+            for speaker in speakers:
+                speaker.sessionKeys.append(new_session.key)
+
+            ndb.put_multi(speakers)
+
             # Queue a task to check if the speaker of this session should be
             # a featured speaker
             taskqueue.add(
