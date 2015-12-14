@@ -852,9 +852,10 @@ class ConferenceApi(remote.Service):
         data['key'] = s_key
 
         # Create the Speaker entity in the datastore
-        Speaker(**data).put()
+        new_speaker = Speaker(**data)
+        new_speaker.put()
 
-        return request
+        return self._copySpeakerToForm(new_speaker)
 
 
     @endpoints.method(SpeakerForm, SpeakerForm, path='speaker',
