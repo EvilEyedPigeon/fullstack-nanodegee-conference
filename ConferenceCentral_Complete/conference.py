@@ -682,25 +682,12 @@ class ConferenceApi(remote.Service):
         new_session = Session(**data)
         new_session.put()
 
-        # Check if the principle speaker of this session is speaking at more
-        # than one session at this conference
         if data['speakerWebSafeKeys']:
-            wspsk = data['speakerWebSafeKeys'][0]
-            qry = Session.query(ancestor=conf.key)
-            qry = qry.filter(Session.speakerWebSafeKeys == wspsk)
-
-            if qry.count() > 1:
-                # Get name of speaker and sessions
-                speaker_key = ndb.Key(urlsafe=wspsk)
-                speaker = speaker_key.get()
-
-                sessions = qry.fetch(projection=[Session.name])
-                session_names = ', '.join(session.name for session in sessions)
-
-                # Queue a task to put it in the memcache
-                taskqueue.add(params={'speakerName': speaker.name,
-                                    'sessionNames': session_names},
-                            url='/tasks/set_featured_speaker')
+            # Queue a task to check if the speaker of this session should be
+            # a featured speaker
+            taskqueue.add(
+                params={'sessionWebsafeKey': new_session.key.urlsafe()},
+                url='/tasks/set_featured_speaker')
 
         return self._copySessionToForm(new_session)
 
@@ -981,9 +968,31 @@ class ConferenceApi(remote.Service):
     @staticmethod
     def _cacheFeaturedSpeaker(request):
         """Create Featured Speaker and assign to memcache."""
-        featured_speaker = FEATURED_SPEAKER_TPL % (request.get('speakerName'),
-                                                   request.get('sessionNames'))
-        memcache.set(MEMCACHE_FEATURED_SPEAKER_KEY, featured_speaker)
+        # Get the session object and its parent conference object
+        session = ndb.Key(urlsafe=request.get('sessionWebsafeKey')).get()
+        conf = session.key.parent().get()
+
+        # Query all the sessions where the principle speaker of this session
+        # is also speaking.
+        wspsk = session.speakerWebSafeKeys[0]
+        qry = Session.query(ancestor=conf.key)
+        qry = qry.filter(Session.speakerWebSafeKeys == wspsk)
+
+        # If the featured speaker is not set, return an empty string
+        featured_speaker = ""
+
+        if qry.count() > 1:
+            # Get name of speaker and sessions
+            speaker_key = ndb.Key(urlsafe=wspsk)
+            speaker = speaker_key.get()
+
+            # Compile a list of session names where they are speaking.
+            sessions = qry.fetch(projection=[Session.name])
+            session_names = ', '.join(session.name for session in sessions)
+
+            featured_speaker = FEATURED_SPEAKER_TPL % (speaker.name,
+                                                       session_names)
+            memcache.set(MEMCACHE_FEATURED_SPEAKER_KEY, featured_speaker)
 
         return featured_speaker
 
