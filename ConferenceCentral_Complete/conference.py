@@ -683,22 +683,23 @@ class ConferenceApi(remote.Service):
 
         # Check if the principle speaker of this session is speaking at more
         # than one session at this conference
-        wspsk = data['speakerWebSafeKeys'][0]
-        qry = Session.query(ancestor=conf.key)
-        qry = qry.filter(Session.speakerWebSafeKeys == wspsk)
+        if data['speakerWebSafeKeys']:
+            wspsk = data['speakerWebSafeKeys'][0]
+            qry = Session.query(ancestor=conf.key)
+            qry = qry.filter(Session.speakerWebSafeKeys == wspsk)
 
-        if qry.count() > 1:
-            # Get name of speaker and sessions
-            speaker_key = ndb.Key(urlsafe=wspsk)
-            speaker = speaker_key.get()
+            if qry.count() > 1:
+                # Get name of speaker and sessions
+                speaker_key = ndb.Key(urlsafe=wspsk)
+                speaker = speaker_key.get()
 
-            sessions = qry.fetch(projection=[Session.name])
-            session_names = ', '.join(session.name for session in sessions)
+                sessions = qry.fetch(projection=[Session.name])
+                session_names = ', '.join(session.name for session in sessions)
 
-            # Queue a task to put it in the memcache
-            taskqueue.add(params={'speakerName': speaker.name,
-                                  'sessionNames': session_names},
-                          url='/tasks/set_featured_speaker')
+                # Queue a task to put it in the memcache
+                taskqueue.add(params={'speakerName': speaker.name,
+                                    'sessionNames': session_names},
+                            url='/tasks/set_featured_speaker')
 
         return request
 
