@@ -901,24 +901,24 @@ class ConferenceApi(remote.Service):
 
         # Check if the session specified in the request exists.
         wssk = request.websafeSessionKey
-        self._checkEntityExists(wssk, 'session')
+        session = self._checkEntityExists(wssk, 'session')
 
         if add:
             # Check if user already has this session in their wishlist
-            if wssk in prof.sessionKeysInWishlist:
+            if session.key in prof.sessionKeysInWishlist:
                 raise ConflictException(
                     "You already have this session in your wishlist"
                 )
 
             # Update the user's wishlist
-            prof.sessionKeysInWishlist.append(wssk)
+            prof.sessionKeysInWishlist.append(session.key)
             retval = True
 
         # Remove session from wishlist
         else:
             # Check if session is in wishlist
-            if wssk in prof.sessionKeysInWishlist:
-                prof.sessionKeysInWishlist.remove(wssk)
+            if session.key in prof.sessionKeysInWishlist:
+                prof.sessionKeysInWishlist.remove(session.key)
                 retval = True
             else:
                 retval = False
@@ -953,10 +953,7 @@ class ConferenceApi(remote.Service):
         prof = self._getProfileFromUser()
 
         # Get session keys from user's wishlist and the session objects
-        session_keys = (
-            [ndb.Key(urlsafe=wssk) for wssk in prof.sessionKeysInWishlist]
-        )
-        sessions = ndb.get_multi(session_keys)
+        sessions = ndb.get_multi(prof.sessionKeysInWishlist)
 
         # Return sessions
         return SessionForms(
